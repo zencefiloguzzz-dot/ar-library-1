@@ -1,335 +1,105 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR Deneyimi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phrasal-Filmer AR</title>
+    <!-- Mind-AR ve A-Frame Kütüphaneleri -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        
+        /* Başlangıç Ekranı */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center;
+        }
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+        #start-btn {
+            padding: 15px 30px; font-size: 20px; background: #2196F3;
+            color: white; border: none; border-radius: 50px; cursor: pointer;
+            margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
 
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: #050a0f;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      color: #e0f0ff;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-    }
-
-    #ar-scene {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-    }
-
-    #overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(ellipse at 50% 40%, #0d2540 0%, #050a0f 70%);
-      transition: opacity 0.8s ease;
-    }
-
-    #overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .ring-outer {
-      width: 180px;
-      height: 180px;
-      border-radius: 50%;
-      border: 2px solid rgba(0, 180, 255, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      margin-bottom: 36px;
-      animation: pulseRing 3s ease-in-out infinite;
-    }
-    .ring-outer::before {
-      content: '';
-      position: absolute;
-      inset: -12px;
-      border-radius: 50%;
-      border: 1px solid rgba(0, 180, 255, 0.08);
-    }
-    .ring-inner {
-      width: 130px;
-      height: 130px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 180, 255, 0.12) 0%, transparent 70%);
-      border: 1.5px solid rgba(0, 200, 255, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: spinSlow 8s linear infinite;
-    }
-    .scan-icon {
-      font-size: 52px;
-      filter: drop-shadow(0 0 12px rgba(0, 200, 255, 0.7));
-      animation: floatIcon 3s ease-in-out infinite;
-    }
-
-    @keyframes pulseRing {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 180, 255, 0); }
-      50%       { box-shadow: 0 0 0 18px rgba(0, 180, 255, 0.05); }
-    }
-    @keyframes spinSlow {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-    @keyframes floatIcon {
-      0%, 100% { transform: translateY(0); }
-      50%       { transform: translateY(-6px); }
-    }
-
-    .overlay-title {
-      font-size: clamp(1.4rem, 4vw, 2rem);
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: #ffffff;
-      text-shadow: 0 0 24px rgba(0, 180, 255, 0.5);
-      margin-bottom: 10px;
-      text-align: center;
-    }
-    .overlay-sub {
-      font-size: 0.92rem;
-      color: rgba(180, 220, 255, 0.6);
-      letter-spacing: 0.04em;
-      text-align: center;
-      max-width: 280px;
-      line-height: 1.6;
-      margin-bottom: 36px;
-    }
-
-    .start-btn {
-      padding: 14px 44px;
-      border: none;
-      border-radius: 50px;
-      background: linear-gradient(135deg, #0077cc, #00c8ff);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.15s ease, box-shadow 0.3s ease;
-      box-shadow: 0 0 24px rgba(0, 180, 255, 0.35);
-    }
-    .start-btn:hover { transform: scale(1.04); box-shadow: 0 0 36px rgba(0, 200, 255, 0.55); }
-    .start-btn:active { transform: scale(0.98); }
-
-    #hud {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 200;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-    #hud.visible { display: flex; }
-
-    .hud-badge {
-      background: rgba(5, 15, 30, 0.75);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0, 180, 255, 0.25);
-      border-radius: 50px;
-      padding: 7px 20px;
-      font-size: 0.78rem;
-      letter-spacing: 0.06em;
-      color: rgba(180, 220, 255, 0.8);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .hud-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: #00e5ff;
-      box-shadow: 0 0 6px #00e5ff;
-      animation: blink 1.4s ease-in-out infinite;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
-    }
-
-    .corner {
-      position: fixed;
-      z-index: 50;
-      width: 36px; height: 36px;
-      pointer-events: none;
-      display: none;
-    }
-    .corner.visible { display: block; }
-    .corner::before, .corner::after {
-      content: '';
-      position: absolute;
-      background: rgba(0, 200, 255, 0.5);
-    }
-    .corner::before { width: 2px; height: 100%; }
-    .corner::after  { width: 100%; height: 2px; }
-    .corner.tl { top: 16px; left: 16px; }
-    .corner.tr { top: 16px; right: 16px; transform: scaleX(-1); }
-    .corner.bl { bottom: 16px; left: 16px; transform: scaleY(-1); }
-    .corner.br { bottom: 16px; right: 16px; transform: scale(-1); }
-
-    #found-notif {
-      position: fixed;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      z-index: 300;
-      background: rgba(0, 200, 100, 0.15);
-      border: 1px solid rgba(0, 230, 120, 0.4);
-      backdrop-filter: blur(10px);
-      border-radius: 50px;
-      padding: 10px 28px;
-      font-size: 0.82rem;
-      letter-spacing: 0.04em;
-      color: #7effc0;
-      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
-      opacity: 0;
-      white-space: nowrap;
-    }
-    #found-notif.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-  </style>
+        /* Kamera Çerçevesi / HUD */
+        #hud {
+            position: fixed; top: 20px; width: 100%; text-align: center;
+            color: white; z-index: 999; display: none; text-shadow: 1px 1px 2px black;
+        }
+    </style>
 </head>
+
 <body>
-
-  <div id="overlay">
-    <div class="ring-outer">
-      <div class="ring-inner">
-        <span class="scan-icon">📷</span>
-      </div>
+    <!-- Giriş Ekranı -->
+    <div id="overlay">
+        <h2>Phrasal-Filmer</h2>
+        <p>Kamerayı kullanmak ve videoyu aktifleştirmek için butona basın.</p>
+        <button id="start-btn">AR DENEYİMİNİ BAŞLAT</button>
     </div>
-    <h1 class="overlay-title">AR DENEYİMİ</h1>
-    <p class="overlay-sub">Kamerayı etkinleştirmek için başlatın, ardından hedef görüntüye yöneltin.</p>
-    <button class="start-btn" onclick="startAR()">BAŞLAT</button>
-  </div>
 
-  <div id="hud">
-    <div class="hud-badge">
-      <span class="hud-dot"></span>
-      <span id="hud-text">Hedef aranıyor…</span>
-    </div>
-  </div>
+    <!-- Bilgi Ekranı -->
+    <div id="hud">Kamerayı Kartın Üzerine Tutun</div>
 
-  <div class="corner tl"></div>
-  <div class="corner tr"></div>
-  <div class="corner bl"></div>
-  <div class="corner br"></div>
+    <a-scene 
+        mindar-image="imageTargetSrc: ./cuw.mind; autoStart: false; uiScanning: no;" 
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
+        
+        <a-assets>
+            <!-- Videoyu muted (sessiz) ve playsinline ile tanımlıyoruz -->
+            <video id="ar-video" src="cuw.mp4" 
+                preload="auto" loop crossorigin="anonymous" 
+                webkit-playsinline playsinline muted>
+            </video>
+        </a-assets>
 
-  <div id="found-notif">✦ Hedef tespit edildi — video oynatılıyor</div>
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-  <div id="ar-scene">
-    <a-scene
-      id="aframe-scene"
-      mindar-image="imageTargetSrc: cuw.mind; autoStart: true;"
-      color-space="sRGB"
-      renderer="colorManagement: true; physicallyCorrectLights: true"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-    >
-     <a-assets>
-    <video
-      id="ar-video"
-      src="cuw.mp4"
-      preload="auto"
-      playsinline
-      webkit-playsinline
-      muted
-      loop
-      crossorigin="anonymous"
-    ></video>
-</a-assets>
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-video
-          id="a-video-el"
-          src="#ar-video"
-          position="0 0 0.001"
-          width="1"
-          height="0.5625"
-          rotation="0 0 0"
-          material="side: double"
-        ></a-video>
-
-        <a-plane
-          position="0 0 -0.001"
-          width="1.06"
-          height="0.62"
-          color="#001a33"
-          opacity="0.35"
-          material="transparent: true"
-        ></a-plane>
-
-        <a-entity
-          geometry="primitive: plane; width: 1.08; height: 0.64"
-          material="color: #00c8ff; opacity: 0.08; transparent: true; wireframe: true"
-          position="0 0 0.002"
-        ></a-entity>
-      </a-entity>
+        <!-- Hedef Bulunduğunda Videoyu Göster -->
+        <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
+            <a-video src="#ar-video" width="1" height="0.55" position="0 0 0" rotation="0 0 0"></a-video>
+        </a-entity>
     </a-scene>
-  </div>
 
-  <script>
-    let arStarted = false;
+    <script>
+        const startBtn = document.getElementById('start-btn');
+        const overlay = document.getElementById('overlay');
+        const hud = document.getElementById('hud');
+        const video = document.getElementById('ar-video');
+        const sceneEl = document.querySelector('a-scene');
+        const targetEl = document.getElementById('target-entity');
 
-    // Hedef event'lerini hemen bağla (autoStart: true ile sahne otomatik başlıyor)
-    const scene = document.getElementById('aframe-scene');
-    const target = document.querySelector('[mindar-image-target]');
+        startBtn.addEventListener('click', () => {
+            // 1. ADIM: Android için video kilidini aç (En önemli kısım)
+            video.play().then(() => {
+                video.pause(); // Sadece kilidi açtık
+                video.currentTime = 0;
+            }).catch(e => console.error("Video kilidi açılamadı:", e));
 
-    target.addEventListener('targetFound', () => {
-      document.getElementById('hud-text').textContent = 'Hedef bulundu ✓';
-      const notif = document.getElementById('found-notif');
-      notif.classList.add('show');
-      setTimeout(() => notif.classList.remove('show'), 3000);
+            // 2. ADIM: AR Sistemini başlat
+            sceneEl.systems["mindar-image-system"].start(); 
+            
+            overlay.style.display = 'none';
+            hud.style.display = 'block';
+        });
 
-      const vid = document.getElementById('ar-video');
-     function startAR() {
-    if (arStarted) return;
-    arStarted = true;
+        // Hedef Algılama Olayları
+        targetEl.addEventListener("targetFound", event => {
+            console.log("Hedef Bulundu");
+            hud.textContent = "Video Oynatılıyor...";
+            video.play();
+        });
 
-    // Videoyu burada bir kez "oynat-duraklat" yaparak Android kilidini açıyoruz
-    const vid = document.getElementById('ar-video');
-    if (vid) {
-        vid.play().then(() => {
-            vid.pause(); // Kilit açıldı, artık hedef bulunca kendi başlayacak
-        }).catch(e => console.log("Video başlatılamadı:", e));
-    }
-
-    document.getElementById('overlay').classList.add('hidden');
-    document.getElementById('hud').classList.add('visible');
-}
-
-    function startAR() {
-      if (arStarted) return;
-      arStarted = true;
-
-      document.getElementById('overlay').classList.add('hidden');
-      document.getElementById('hud').classList.add('visible');
-      document.querySelectorAll('.corner').forEach(c => c.classList.add('visible'));
-    }
-  </script>
+        targetEl.addEventListener("targetLost", event => {
+            console.log("Hedef Kayboldu");
+            hud.textContent = "Kamerayı Kartın Üzerine Tutun";
+            video.pause();
+        });
+    </script>
 </body>
 </html>
