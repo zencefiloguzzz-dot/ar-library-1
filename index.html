@@ -44,11 +44,8 @@
     <div id="hud">Kamerayı Kartın Üzerine Tutun</div>
 
     <a-scene 
-        mindar-image="imageTargetSrc: ./cuw.mind; autoStart: false; uiScanning: no;" 
-        color-space="sRGB" 
-        renderer="colorManagement: true, physicallyCorrectLights" 
-        vr-mode-ui="enabled: false" 
-        device-orientation-permission-ui="enabled: false">
+       mindar-image="imageTargetSrc: cuw.mind; autoStart: false; uiScanning: yes; filterMinCF:0.0001; filterBeta: 0.001;" 
+    ... >
         
         <a-assets>
             <!-- Videoyu muted (sessiz) ve playsinline ile tanımlıyoruz -->
