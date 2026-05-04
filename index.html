@@ -306,16 +306,21 @@
       setTimeout(() => notif.classList.remove('show'), 3000);
 
       const vid = document.getElementById('ar-video');
-      if (vid) {
-        vid.muted = true;
-        vid.play().then(() => { vid.muted = false; }).catch(() => { vid.play().catch(() => {}); });
-      }
-    });
+     function startAR() {
+    if (arStarted) return;
+    arStarted = true;
 
-    target.addEventListener('targetLost', () => {
-      document.getElementById('hud-text').textContent = 'Hedef aranıyor…';
-      document.getElementById('ar-video')?.pause();
-    });
+    // Videoyu burada bir kez "oynat-duraklat" yaparak Android kilidini açıyoruz
+    const vid = document.getElementById('ar-video');
+    if (vid) {
+        vid.play().then(() => {
+            vid.pause(); // Kilit açıldı, artık hedef bulunca kendi başlayacak
+        }).catch(e => console.log("Video başlatılamadı:", e));
+    }
+
+    document.getElementById('overlay').classList.add('hidden');
+    document.getElementById('hud').classList.add('visible');
+}
 
     function startAR() {
       if (arStarted) return;
