@@ -74,25 +74,48 @@
         const sceneEl = document.querySelector('a-scene');
         const targetEl = document.getElementById('target-entity');
 
-        startBtn.addEventListener('click', () => {
-            // 1. ADIM: Android için video kilidini aç (En önemli kısım)
-            video.play().then(() => {
-                video.pause(); // Sadece kilidi açtık
-                video.currentTime = 0;
-            }).catch(e => console.error("Video kilidi açılamadı:", e));
+       startBtn.addEventListener('click', () => {
+    // 1. ADIM: Video ve Ses Kilidini Aç
+    // Android/Chrome için videoyu sessizce oynatıp hemen durduruyoruz.
+    // Bu, tarayıcıya "kullanıcı etkileşimi oldu, ses açılabilir" sinyali gönderir.
+    video.play().then(() => {
+        video.pause(); 
+        video.currentTime = 0;
+        video.muted = false; // Kilidi açtık, artık sesi serbest bırakabiliriz.
+    }).catch(e => {
+        console.error("Video kilidi açılamadı, sessiz devam ediliyor:", e);
+        video.muted = true; // Hata durumunda en azından görüntünün oynaması için sessize al.
+    });
 
-            // 2. ADIM: AR Sistemini başlat
-            sceneEl.systems["mindar-image-system"].start(); 
-            
-            overlay.style.display = 'none';
-            hud.style.display = 'block';
-        });
+    // 2. ADIM: AR Sistemini Başlat
+    // autoStart: false kullandığımız için sistemi burada manuel tetikliyoruz.
+    if (sceneEl.systems["mindar-image-system"]) {
+        sceneEl.systems["mindar-image-system"].start();
+    }
+    
+    overlay.style.display = 'none';
+    hud.style.display = 'block';
+});
 
-        // Hedef Algılama Olayları
-        targetEl.addEventListener("targetFound", event => {
-            console.log("Hedef Bulundu");
-            hud.textContent = "Video Oynatılıyor...";
-            video.play();
+// Hedef Algılama Olayları
+targetEl.addEventListener("targetFound", event => {
+    console.log("Hedef Bulundu: cuw.mind");
+    hud.textContent = "Video Oynatılıyor... ✓";
+    
+    // Video zaten kilitli olmadığı için burada doğrudan sesli başlar.
+    video.muted = false; 
+    video.play().catch(e => {
+        console.log("Oynatma hatası, sessiz deneniyor...");
+        video.muted = true;
+        video.play();
+    });
+});
+
+targetEl.addEventListener("targetLost", event => {
+    console.log("Hedef Kayboldu");
+    hud.textContent = "Kamerayı Kartın Üzerine Tutun";
+    video.pause();
+});
         });
 
         targetEl.addEventListener("targetLost", event => {
