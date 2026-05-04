@@ -71,18 +71,21 @@
         const sceneEl = document.querySelector('a-scene');
         const targetEl = document.getElementById('target-entity');
 
-       startBtn.addEventListener('click', () => {
-    // 1. ADIM: Video ve Ses Kilidini Aç
-    // Android/Chrome için videoyu sessizce oynatıp hemen durduruyoruz.
-    // Bu, tarayıcıya "kullanıcı etkileşimi oldu, ses açılabilir" sinyali gönderir.
+     startBtn.addEventListener('click', () => {
+    // Android ses kilidini burada açıyoruz
     video.play().then(() => {
         video.pause(); 
         video.currentTime = 0;
-        video.muted = false; // Kilidi açtık, artık sesi serbest bırakabiliriz.
-    }).catch(e => {
-        console.error("Video kilidi açılamadı, sessiz devam ediliyor:", e);
-        video.muted = true; // Hata durumunda en azından görüntünün oynaması için sessize al.
-    });
+        video.muted = false; // Kullanıcı tıkladığı için artık ses açılabilir
+    }).catch(e => console.error("Ses açılamadı:", e));
+
+    if (sceneEl.systems["mindar-image-system"]) {
+        sceneEl.systems["mindar-image-system"].start();
+    }
+    
+    overlay.style.display = 'none';
+    hud.style.display = 'block';
+});
 
     // 2. ADIM: AR Sistemini Başlat
     // autoStart: false kullandığımız için sistemi burada manuel tetikliyoruz.
