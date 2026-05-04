@@ -355,15 +355,23 @@
       document.querySelectorAll('.corner').forEach(c => c.classList.add('visible'));
 
       // MindAR'ı başlat
-      const scene = document.getElementById('aframe-scene');
-      scene.addEventListener('loaded', () => {
-        const sys = scene.systems['mindar-image-system'];
-        if (sys) sys.start();
-      });
+     const scene = document.getElementById('aframe-scene');
+
+// loaded yerine şunu kullanın:
+const tryStart = () => {
+  const sys = scene.systems['mindar-image-system'];
+  if (sys) {
+    sys.start();
+  } else {
+    setTimeout(tryStart, 300);
+  }
+};
+tryStart();
 
       // Hedef olayları
-      scene.addEventListener('targetFound', () => {
-        document.getElementById('hud-text').textContent = 'Hedef bulundu ✓';
+     const target = document.querySelector('[mindar-image-target]');
+target.addEventListener('targetFound', () => { ... });
+target.addEventListener('targetLost', () => { ... });
 
         const notif = document.getElementById('found-notif');
         notif.classList.add('show');
