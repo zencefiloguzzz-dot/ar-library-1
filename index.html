@@ -86,13 +86,12 @@
 
     // 2. ADIM: AR Sistemini Başlat
     // autoStart: false kullandığımız için sistemi burada manuel tetikliyoruz.
-    if (sceneEl.systems["mindar-image-system"]) {
-        sceneEl.systems["mindar-image-system"].start();
-    }
-    
-    overlay.style.display = 'none';
-    hud.style.display = 'block';
-});
+  <a-scene 
+    mindar-image="imageTargetSrc: cuw.mind; autoStart: false; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.01;" 
+    color-space="sRGB" 
+    renderer="colorManagement: true, physicallyCorrectLights" 
+    vr-mode-ui="enabled: false" 
+    device-orientation-permission-ui="enabled: false">
 
 // Hedef Algılama Olayları
 targetEl.addEventListener("targetFound", event => {
