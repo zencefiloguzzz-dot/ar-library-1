@@ -340,33 +340,7 @@
   <script>
     let arStarted = false;
 
-    function startAR() {
-      if (arStarted) return;
-      arStarted = true;
-
-      // Overlay'i gizle
-      document.getElementById('overlay').classList.add('hidden');
-
-      // AR sahnesini göster
-      document.getElementById('ar-scene').style.display = 'block';
-
-      // HUD + köşe süsleri göster
-      document.getElementById('hud').classList.add('visible');
-      document.querySelectorAll('.corner').forEach(c => c.classList.add('visible'));
-
-      // MindAR'ı başlat
-     const scene = document.getElementById('aframe-scene');
-
-// loaded yerine şunu kullanın:
-const tryStart = () => {
-  const sys = scene.systems['mindar-image-system'];
-  if (sys) {
-    sys.start();
-  } else {
-    setTimeout(tryStart, 300);
-  }
-};
-tryStart();
+    https://zencefiloguzzz-dot.github.io/ar-library-1/
 
       // Hedef olayları
      const target = document.querySelector('[mindar-image-target]');
