@@ -1,65 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phrasal-Filmer AR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>The Phrasal-Filmer AR Library</title>
     <!-- Mind-AR ve A-Frame Kütüphaneleri -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     
     <style>
         body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        
-        /* Başlangıç Ekranı */
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 1000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             color: white; text-align: center;
         }
-
         #start-btn {
             padding: 15px 30px; font-size: 20px; background: #2196F3;
-            color: white; border: none; border-radius: 50px; cursor: pointer;
-            margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            color: white; border: none; border-radius: 10px; cursor: pointer;
+            margin-top: 20px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
         }
-
-        /* Kamera Çerçevesi / HUD */
         #hud {
-            position: fixed; top: 20px; width: 100%; text-align: center;
-            color: white; z-index: 999; display: none; text-shadow: 1px 1px 2px black;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: white; padding: 10px 20px;
+            border-radius: 20px; z-index: 999; display: none; font-size: 14px;
         }
     </style>
 </head>
-
 <body>
-    <!-- Giriş Ekranı -->
+
+    <!-- Başlangıç Ekranı (Android Ses Kilidini Açmak İçin Şart) -->
     <div id="overlay">
-        <h2>Phrasal-Filmer</h2>
-        <p>Kamerayı kullanmak ve videoyu aktifleştirmek için butona basın.</p>
+        <h2>The Phrasal-Filmer</h2>
+        <p>Deneyimi başlatmak için butona tıklayın <br> ve kameraya izin verin.</p>
         <button id="start-btn">AR DENEYİMİNİ BAŞLAT</button>
     </div>
 
-    <!-- Bilgi Ekranı -->
+    <!-- Bilgi Paneli -->
     <div id="hud">Kamerayı Kartın Üzerine Tutun</div>
 
     <a-scene 
-       mindar-image="imageTargetSrc: cuw.mind; autoStart: false; uiScanning: yes; filterMinCF:0.0001; filterBeta: 0.001;" 
-    ... >
+        mindar-image="imageTargetSrc: cuw.mind; autoStart: false; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.01;" 
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
         
         <a-assets>
-            <!-- Videoyu muted (sessiz) ve playsinline ile tanımlıyoruz -->
-            <video id="ar-video" src="cuw.mp4" 
-                preload="auto" loop crossorigin="anonymous" 
-                webkit-playsinline playsinline muted>
-            </video>
+            <!-- Video dosyası: playsinline ve muted Android için kritiktir -->
+            <video id="ar-video" src="cuw.mp4" preload="auto" loop crossorigin="anonymous" playsinline webkit-playsinline muted></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- Hedef Bulunduğunda Videoyu Göster -->
-        <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
-            <a-video src="#ar-video" width="1" height="0.56" position="0 0 0" material="shader: flat; transparent: true;"></material></a-video>
+        <!-- Hedef Bulunduğunda Görünecek Video -->
+        <a-entity id="target-anchor" mindar-image-target="targetIndex: 0">
+            <!-- shader: flat siyah ekran sorununu çözer -->
+            <a-video src="#ar-video" width="1" height="0.56" position="0 0 0" material="shader: flat; color: #FFF;"></a-video>
         </a-entity>
     </a-scene>
 
@@ -69,56 +66,31 @@
         const hud = document.getElementById('hud');
         const video = document.getElementById('ar-video');
         const sceneEl = document.querySelector('a-scene');
-        const targetEl = document.getElementById('target-entity');
+        const targetEl = document.querySelector('#target-anchor');
 
-     startBtn.addEventListener('click', () => {
-    // Android ses kilidini burada açıyoruz
-    video.play().then(() => {
-        video.pause(); 
-        video.currentTime = 0;
-        video.muted = false; // Kullanıcı tıkladığı için artık ses açılabilir
-    }).catch(e => console.error("Ses açılamadı:", e));
+        startBtn.addEventListener('click', () => {
+            // 1. ADIM: Android Ses Kilidini Aç
+            video.play().then(() => {
+                video.pause(); 
+                video.currentTime = 0;
+                video.muted = false; // Kullanıcı tıkladığı için ses artık serbest
+            }).catch(e => console.log("Ses açılamadı, sessiz devam:", e));
 
-    if (sceneEl.systems["mindar-image-system"]) {
-        sceneEl.systems["mindar-image-system"].start();
-    }
-    
-    overlay.style.display = 'none';
-    hud.style.display = 'block';
-});
+            // 2. ADIM: AR Sistemini Başlat
+            sceneEl.systems["mindar-image-system"].start();
+            
+            overlay.style.display = 'none';
+            hud.style.display = 'block';
+        });
 
-    // 2. ADIM: AR Sistemini Başlat
-    // autoStart: false kullandığımız için sistemi burada manuel tetikliyoruz.
-  <a-scene 
-    mindar-image="imageTargetSrc: cuw.mind; autoStart: false; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.01;" 
-    color-space="sRGB" 
-    renderer="colorManagement: true, physicallyCorrectLights" 
-    vr-mode-ui="enabled: false" 
-    device-orientation-permission-ui="enabled: false">
-
-// Hedef Algılama Olayları
-targetEl.addEventListener("targetFound", event => {
-    console.log("Hedef Bulundu: cuw.mind");
-    hud.textContent = "Video Oynatılıyor... ✓";
-    
-    // Video zaten kilitli olmadığı için burada doğrudan sesli başlar.
-    video.muted = false; 
-    video.play().catch(e => {
-        console.log("Oynatma hatası, sessiz deneniyor...");
-        video.muted = true;
-        video.play();
-    });
-});
-
-targetEl.addEventListener("targetLost", event => {
-    console.log("Hedef Kayboldu");
-    hud.textContent = "Kamerayı Kartın Üzerine Tutun";
-    video.pause();
-});
+        // Hedef Algılama
+        targetEl.addEventListener("targetFound", event => {
+            hud.textContent = "Video Oynatılıyor... ✓";
+            video.muted = false; // Sesi garantiye al
+            video.play();
         });
 
         targetEl.addEventListener("targetLost", event => {
-            console.log("Hedef Kayboldu");
             hud.textContent = "Kamerayı Kartın Üzerine Tutun";
             video.pause();
         });
